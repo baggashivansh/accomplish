@@ -1,6 +1,4 @@
 'use client';
-
-// Added useState to manage dropped file state for drag and drop attachments
 import { useRef, useEffect, useState } from 'react';
 import { getAccomplish } from '../../lib/accomplish';
 import { CornerDownLeft, Loader2, AlertCircle } from 'lucide-react';
@@ -62,6 +60,13 @@ export default function TaskInputBar({
   const isDisabled = disabled || isLoading;
   const isOverLimit = value.length > PROMPT_DEFAULT_MAX_LENGTH;
   const canSubmit = !!value.trim() && !isDisabled && !isOverLimit;
+  let submitTooltip = 'Submit';
+  if (isOverLimit) {
+    submitTooltip = 'Message is too long';
+  } else if (!value.trim()) {
+    submitTooltip = 'Enter a message';
+  }
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pendingAutoSubmitRef = useRef<string | null>(null);
   const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
@@ -118,7 +123,9 @@ export default function TaskInputBar({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Ignore Enter during IME composition (Chinese/Japanese input)
-    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+    if (e.nativeEvent.isComposing || e.keyCode === 229) {
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (canSubmit) {
@@ -144,6 +151,9 @@ export default function TaskInputBar({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) {
+      return;
+    }
     setDroppedFiles(files);  // Handle file drop and store files in state for attachment preview
   };
 
@@ -264,7 +274,7 @@ export default function TaskInputBar({
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                <span>{isOverLimit ? 'Message is too long' : !value.trim() ? 'Enter a message' : 'Submit'}</span>
+                <span>{submitTooltip}</span>
               </TooltipContent>
             </Tooltip>
           </div>
